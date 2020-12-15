@@ -57,7 +57,6 @@ equals the accumulator version describing the same function for all natural numb
            
               (= (non-acc-fn-sum x) 
                  (acc-fn-sum-interface x))))
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (definec acc-fn-mult (x :nat acc :nat) :nat
@@ -111,5 +110,62 @@ equals the accumulator version describing the same function for all natural numb
 |#
 (defthm rec=acc-mult
    (implies (and (natp x))
+           
               (= (non-acc-fn-mult x) 
-                 (acc-fn-mult-interface x))))
+                 (acc-fn-mult-interface x))))#|ACL2s-ToDo-Line|#
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;Failed General Multiplication Proof:
+(definec acc-fn-gen (x :nat acc :nat b :nat) :nat
+  (cond ((zp  x)    acc)
+        (t        (acc-fn-gen (1- x) (* x (* b acc)) b))))
+
+(definec non-acc-fn-gen (x :nat b :nat) :nat
+  (cond ((zp  x) 1)
+        (t       (* x (* b (non-acc-fn-gen (1- x) b) )))))
+
+(definec acc-fn-gen-interface (x :nat b :nat) :nat
+  (acc-fn-gen x 1 b))
+
+; Sanity check, does test? find any counterexamples? No. :D
+(test? (implies (and (natp x) (natp acc) (= acc 1) (natp b))
+              (equal (non-acc-fn-gen x b) (acc-fn-gen x acc b))))
+
+
+#|
+Description:
+In order to prove gen-mult-associativity-one, we must prove associativity in the
+general case for our accumulator function.
+
+That is, adding to the accumulator is the same as adding to the result of the function.
+|#
+
+
+(defthm gen-mult-associativity-general
+  (implies (and (natp a) (natp b) (natp c))
+           (equal (acc-fn-gen a (* c b) b)
+                  (* b (acc-fn-gen a c b)))))
+
+#|
+Description:
+gen-mult-associativity-one is required to prove a specific case in rec=acc-gen.
+Unfortunately, this was the step that failed, due to the fact that ACL2s could
+not perform the appropriate, in order to prove the statement.
+|#
+
+(defthm gen-mult-associativity-one
+  (implies (and (natp a) (natp b) (= acc 1))
+           (equal (acc-fn-gen a (* acc b) b)
+                  (* b (acc-fn-gen a acc b)))))
+
+#|
+Description:
+rec=acc-gen claims that the non-accumulator version of a constant times the nth factorial
+equals the accumulator version describing the same function for all natural numbers x.
+
+|#
+(defthm rec=acc-gen
+   (implies (and (natp x) (natp b))
+              (= (non-acc-fn-gen x b) 
+                 (acc-fn-gen-interface x b))))
+
